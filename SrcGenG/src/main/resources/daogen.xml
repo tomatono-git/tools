@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<daogen>
+	<project>ProjectName</project>
+	<!-- <path>D:\pg\pleiades-3.6\workspace_fa\FA_Partners\src\jp\co\melco\mei\fa\partners\db\orm</path> -->
+	<!-- <path>D:\pg\pleiades3.7\workspace\ProductSearch\src\jp\co\melco\mei\fa\productsearch\db</path> -->
+	<src>
+		<path>D:\eclipse\workspace\ProjectName\src</path>
+		<basePackageName>packagename.base</basePackageName>
+		<queryPackageName>packagename.db</queryPackageName>
+		<outputEncoding>Windows-31J</outputEncoding>
+		<dto>
+			<suffix>Dto</suffix>
+			<packageName>dto</packageName>
+			<template>template/dto.template</template>
+			<baseClassName></baseClassName>
+			<interface>
+				<className></className>
+			</interface>
+			<order></order>
+		</dto>
+		<dao>
+			<suffix>Dao</suffix>
+			<packageName>dao</packageName>
+			<template>template/dao.template</template>
+			<baseClassName>packagename.dao.BaseDao</baseClassName>
+			<interface>
+				<className></className>
+			</interface>
+		</dao>
+		<!-- 追加のクラス定義 -->
+		<addition>
+			<dao>
+				<table name="PIS_DATA_INPUT_TBL">
+					<method type="find">
+						<condition>KATAMEI</condition>
+						<order></order>
+					</method>
+				</table>
+				<table name="PIS_CLK_FREQ_BLOCK_TBL">
+					<method type="find">
+						<condition>KATAMEI</condition>
+						<order>BLOCK_SEQ</order>
+					</method>
+					<method type="delete">
+						<condition>KATAMEI</condition>
+					</method>
+				</table>
+				<table name="PIS_CLK_FREQ_DETAIL_TBL">
+					<method type="find">
+						<condition>KATAMEI</condition>
+						<order>BLOCK_SEQ,DETAIL_SEQ</order>
+					</method>
+					<method type="delete">
+						<condition>KATAMEI</condition>
+					</method>
+				</table>
+				<table name="PIS_PREDEFINED_CATEGORY_MST">
+					<method type="master">
+						<column>CATEGORY_ID,CATEGORY_NAME</column>
+						<condition>DISPLAY_FLG</condition>
+						<order>DISPLAY_ORDER</order>
+					</method>
+				</table>
+				<table name="PIS_PREDEFINED_DETAIL_MST">
+					<method type="master">
+						<column>DETAIL_ID,DETAIL_NAME</column>
+						<condition>CATEGORY_ID</condition>
+						<order>DISPLAY_ORDER</order>
+					</method>
+					<method type="find">
+						<condition>category_id,detail_id</condition>
+					</method>
+				</table>
+<!-- 				<table name="PIS_COLUMN_MST">
+					<method type="master">
+						<column>COLUMN_NAME,NAME</column>
+						<order>DISPLAY_ORDER</order>
+					</method>
+				</table> -->
+				<table name="PIS_INFO_TYPE_MST">
+					<method type="master">
+						<column>INFO_TYPE_ID,NAME</column>
+						<order>DISPLAY_ORDER</order>
+					</method>
+				</table>
+				<table name="PIS_SEARCH_METHOD_TBL">
+					<method type="find">
+						<condition>search_param_id</condition>
+					</method>
+					<method type="delete">
+						<condition>search_param_id</condition>
+					</method>
+				</table>
+				<table name="PIS_CSV_OUT_INFO_TYPE_TBL">
+					<method type="find">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+					<method type="delete">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+				</table>
+				<table name="PIS_SEARCH_PARAM_DETAIL_TBL">
+					<method type="find">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+					<method type="delete">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+				</table>
+				<table name="PIS_SORT_CONDITION_TBL">
+					<method type="find">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+					<method type="delete">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+				</table>
+				<table name="PIS_USER_SEARCH_PARAM_TBL">
+					<method type="find">
+						<condition>SEARCH_PARAM_NAME,CREATE_USER_ID</condition>
+					</method>
+				</table>
+				<table name="PIS_BOOKMARK_TBL">
+					<method type="delete">
+						<condition>SEARCH_PARAM_ID</condition>
+					</method>
+				</table>
+				<findMaster>
+					<pattern>\w+_MST</pattern>
+				</findMaster>
+			</dao>
+		</addition>
+	</src>
+<!--
+	<dataSource name="jdbc/OracleCoreDS">
+		<driver>oracle.jdbc.driver.OracleDriver</driver>
+		<url>jdbc:oracle:thin:@mpc79686:1521:ORCL</url>
+		<user>oracle</user>
+		<password>PDMORA</password>
+		<schemaName>oracle</schemaName>
+	</dataSource>
+-->
+	<excel>
+		<filePath>テーブル定義書.xls</filePath>
+	</excel>
+	<table>
+		<target>
+			<prefix></prefix>
+			<allow></allow>
+			<deny></deny>
+		</target>
+		<columnName>
+			<optimisticLock></optimisticLock>
+			<create>CREATE_DATE,CREATE_USER_ID,CREATE_JSYSID,CREATE_USER_NAME</create>
+			<update>UPDATE_DATE,UPDATE_USER_ID,UPDATE_JSYSID,UPDATE_USER_NAME</update>
+		</columnName>
+		<ddl>
+			<outputDir>out\DDL</outputDir>
+			<history>
+				<output>create_history_table.sql</output>
+				<template>create_history_table.template</template>
+				<target>
+					<allow></allow>
+					<deny></deny>
+				</target>
+			</history>
+			<sequence>
+				<output>create_sequence.sql</output>
+				<template>create_sequence.template</template>
+				<target>
+					<allow></allow>
+					<deny></deny>
+				</target>
+			</sequence>
+			<trigger>
+				<output>create_trigger.sql</output>
+				<template>create_trigger.template</template>
+				<target>
+					<allow></allow>
+					<deny></deny>
+				</target>
+			</trigger>
+		</ddl>
+		<query name="TestQuery">
+			select sysdate from dual
+		</query>
+	</table>
+</daogen>

@@ -1,0 +1,77 @@
+<% tableList.each { table -> %>\
+CREATE OR REPLACE TRIGGER ${table.name}_TI
+BEFORE INSERT
+ON ${table.name}
+REFERENCING OLD AS OLD NEW AS NEW
+FOR EACH ROW
+BEGIN
+  INSERT INTO ${table.historyName} VALUES (
+     ${table.historyName}_SEQ.NEXTVAL
+    ,'INSERT'
+    ,SYSDATE
+<% table.columnList.each { column -> %>\
+    ,:NEW.${column.columnName}
+<% } %>  );
+END;
+/
+
+CREATE OR REPLACE TRIGGER ${table.name}_TD
+BEFORE DELETE
+ON ${table.name}
+REFERENCING OLD AS OLD NEW AS NEW
+FOR EACH ROW
+BEGIN
+  INSERT INTO ${table.historyName} VALUES (
+     ${table.historyName}_SEQ.NEXTVAL
+    ,'DELETE'
+    ,SYSDATE
+<% table.columnList.each { column -> %>\
+    ,:OLD.${column.columnName}
+<% } %>
+  );
+END;
+/
+
+CREATE OR REPLACE TRIGGER ${table.name}_TU
+BEFORE UPDATE
+ON ${table.name}
+REFERENCING OLD AS OLD NEW AS NEW
+FOR EACH ROW
+BEGIN
+
+  IF
+<% table.pkList.eachWithIndex { pk, i -> %>\
+    ${i != 0 ? 'OR ' : ''}UPDATING('${pk.columnName}')
+<% } %>\
+  THEN
+    INSERT INTO ${table.historyName} VALUES (
+       ${table.historyName}_SEQ.NEXTVAL
+      ,'DELETE'
+      ,SYSDATE
+<% table.columnList.each { column -> %>\
+      ,:OLD.${column.columnName}
+<% } %>\
+    );
+    INSERT INTO ${table.historyName} VALUES (
+       ${table.historyName}_SEQ.NEXTVAL
+      ,'INSERT'
+      ,SYSDATE
+<% table.columnList.each { column -> %>\
+      ,:NEW.${column.columnName}
+<% } %>\
+    );
+  ELSE
+    INSERT INTO ${table.historyName} VALUES (
+       ${table.historyName}_SEQ.NEXTVAL
+      ,'UPDATE'
+      ,SYSDATE
+<% table.columnList.each { column -> %>\
+      ,:OLD.${column.columnName}
+<% } %>\
+    );
+  END IF;
+END;
+/
+
+
+<% } %>\

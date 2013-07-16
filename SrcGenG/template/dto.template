@@ -1,0 +1,76 @@
+package ${table.dtoPackage};
+
+<% config.dto.importList.each { %>\
+import ${it};
+<% } %>\
+
+/**
+ * ${table.logicalName} DTOクラス
+ */
+public class ${table.dtoClassName} \
+<% if (config.dto.baseClassName) { %>\
+extends ${config.dto.baseClassName} \
+<% } %>\
+<% if (config.dto.interfaceList) { %>\
+implements \
+<%     config.dto.interfaceList.each { %>\
+${it} \
+<%     }%>\
+<% } %>\
+{
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * コンストラクタ
+	 */
+	public ${table.dtoClassName}() {
+	}
+
+<% for(column in table.columnList) { %>\
+	/** ${column.logicalName} */
+	private ${column.columnClassName} ${column.fieldName};
+<% } %>\
+<% for(column in table.columnList) { %>\
+
+	/**
+	 * ${column.logicalName}を取得します。
+	 *
+	 * @return ${column.logicalName}
+	 */
+	public ${column.columnClassName} ${column.getterName}() {
+		return ${column.fieldName};
+	}
+
+	/**
+	 * ${column.logicalName}を設定します。
+	 *
+	 * @param ${column.fieldName}
+	 *            ${column.logicalName}
+	 */
+	public void ${column.setterName}(${column.columnClassName} ${column.fieldName}) {
+		this.${column.fieldName} = ${column.fieldName};
+	}
+<% } %>\
+
+	/*
+	 * (非 Javadoc)
+	 *
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("${table.dtoClassName}(${table.logicalName}) [");
+<% table.columnList.eachWithIndex { column, i -> %>\
+		buffer.append("${i != 0 ?', ':''}${column.fieldName}(${column.logicalName})=");
+		buffer.append(${column.fieldName});
+<% } %>\
+
+		buffer.append("]");
+
+		String result = buffer.toString();
+		return result;
+	}
+}

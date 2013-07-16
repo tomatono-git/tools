@@ -1,0 +1,26 @@
+<% tableList.each { table -> %>\
+CREATE TABLE ${table.historyName}
+(
+     DML_ID                         NUMBER(9,0) NOT NULL
+    ,DML_TYPE                       VARCHAR2(10) NOT NULL
+    ,DML_DATE                       DATE DEFAULT SYSDATE NOT NULL
+<% table.columnList.each { column -> %>\
+    ,${column.define}
+<% } %>\
+)
+/
+COMMENT ON TABLE ${table.historyName} IS '${table.logicalName}（変更履歴）'
+/
+COMMENT ON COLUMN ${table.historyName}.DML_ID IS '履歴ID'
+/
+COMMENT ON COLUMN ${table.historyName}.DML_TYPE IS 'データ操作タイプ'
+/
+COMMENT ON COLUMN ${table.historyName}.DML_DATE IS 'データ操作日時'
+/
+<% table.columnList.eachWithIndex { column, i -> %>\
+COMMENT ON COLUMN ${table.historyName}.${column.columnName} IS '${column.logicalName}'
+/
+<% } %>\
+
+
+<% } %>\

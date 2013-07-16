@@ -1,0 +1,11 @@
+<% tableList.each { table -> %>\
+CREATE SEQUENCE ${table.historyName}_SEQ
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 999999999
+NOMINVALUE
+NOCYCLE
+CACHE 20
+NOORDER
+/
+<% } %>

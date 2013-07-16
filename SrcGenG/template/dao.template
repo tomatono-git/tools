@@ -1,0 +1,557 @@
+package ${table.daoPackage};
+
+<% config.dao.importList.each { %>\
+import ${it};
+<% } %>\
+
+import java.util.List;
+
+import jp.co.melco.mei.fa.framework.db.exception.DaoExceptionHandler;
+import jp.co.melco.mei.fa.framework.db.exception.NoDataFoundException;
+import jp.co.melco.mei.fa.framework.db.exception.OptimisticLockException;
+import jp.co.melco.mei.fa.framework.db.jdbc.JdbcManager;
+import jp.co.melco.mei.fa.framework.db.util.SQLBuilder;
+import ${table.dtoPackage}.${table.dtoClassName};
+
+/**
+ * ${table.logicalName} DAOクラス
+ */
+public class ${table.daoClassName} \
+<% if (config.dao.baseClassName) { %>\
+extends ${config.dao.baseClassName} \
+<% } %>\
+<% if (config.dao.interfaceList) { %>\
+implements \
+<%         config.dao.interfaceList.eachWithIndex { name, i -> %>\
+${(i != 0) ? ', ' : ''}${name} \
+<%         }%>\
+<% } %>\
+{
+	private static final String TABLE_NAME = "${table.name}";
+
+	/**
+	 * コンストラクタ
+	 **/
+	public ${table.daoClassName}(JdbcManager manager) {
+		super(manager);
+	}
+
+	/**
+	 * TABLE_NAMEを取得します。
+	 *
+	 * @return tableName
+	 */
+	public static String getTableName() {
+		return TABLE_NAME;
+	}
+
+	/**
+	 * 登録
+	 *
+	 * @param dto
+	 *            登録データ
+	 * @return 登録件数
+	 */
+	public int insert(${table.dtoClassName} dto) {
+		if (dto == null) {
+			throw new IllegalArgumentException("dto is null.");
+		}
+		int result = 0;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("insert into ").append(getTableName()).appendLine();
+			sb.append("(").appendLine();
+<%	table.insertColumnList.eachWithIndex { column, i -> %>\
+			sb.append("    ${i != 0 ? ',':' '}${column.columnName}").appendLine();
+<%	} %>\
+			sb.append(") values (").appendLine();
+<%	table.insertColumnList.eachWithIndex { column, i -> %>\
+<%		if (column.columnName == 'CREATE_DATE') { %>\
+			sb.append("    ${i != 0 ? ',' : '  '}SYSDATE").appendLine();
+<%		} else { %>\
+			sb.append("    ${i != 0 ? ',' : ' '}?").appendLine();
+<%		} %>\
+<%	} %>\
+			sb.append(")").appendLine();
+
+<%	table.insertColumnList.eachWithIndex { column, i -> %>\
+<%		if (column.columnName != 'CREATE_DATE') { %>\
+			sb.addParam(dto.${column.getterName}());
+<%		} %>\
+<%	} %>\
+
+			manager.query(sb);
+			result = manager.executeUpdate();
+
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return result;
+	}
+
+<% if (table.pkList.size() > 0) { %>\
+<%	if (table.updateColumnList.size() > 0) { %>\
+	/**
+	 * 更新
+	 *
+	 * @param dto
+	 *            更新データ
+	 * @return 更新件数
+	 */
+	public int update(${table.dtoClassName} dto) {
+		if (dto == null) {
+			throw new IllegalArgumentException("dto is null.");
+		}
+		int result = 0;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("update ").append(getTableName()).appendLine();
+			sb.append("set ").appendLine();
+<%	table.updateColumnList.eachWithIndex { column, i -> %>\
+<%		if (column.columnName == 'UPDATE_DATE') { %>\
+			sb.append("    ${i != 0 ? ',' : ' '}${column.columnName} = SYSDATE").appendLine();
+<%		} else { %>\
+			sb.append("    ${i != 0 ? ',' : ' '}${column.columnName} = ?").appendLine();
+<%		} %>\
+<%	} %>\
+			sb.append("where").appendLine();
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%	} %>\
+
+<%	table.updateColumnList.eachWithIndex { column, i -> %>\
+<%		if (column.columnName != 'UPDATE_DATE') { %>\
+			sb.addParam(dto.${column.getterName}());
+<%		} %>\
+<%	} %>\
+
+<%	table.pkList.eachWithIndex { column, i -> %>\
+			sb.addParam(dto.${column.getterName}());
+<%	} %>\
+
+			manager.query(sb);
+			result = manager.executeUpdate();
+
+			if (result <= 0) {
+				throw new OptimisticLockException(dto.toString());
+			}
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return result;
+	}
+
+<%	} %>\
+\
+	/**
+	 * 削除
+	 *
+	 * @param dto
+	 *            削除条件
+	 * @return 削除件数
+	 */
+	public int delete(${table.dtoClassName} dto) {
+		if (dto == null) {
+			throw new IllegalArgumentException("dto is null.");
+		}
+		int result = 0;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("delete from ${table.name}").appendLine();
+			sb.append("where").appendLine();
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%	} %>\
+
+<%	table.pkList.eachWithIndex { column, i -> %>\
+			sb.addParam(dto.${column.getterName}());
+<%	} %>\
+
+			manager.query(sb);
+			result = manager.executeUpdate();
+
+			if (result <= 0) {
+				throw new OptimisticLockException(dto.toString());
+			}
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return result;
+	}
+
+	/**
+	 * 削除
+	 *
+<%	table.pkList.eachWithIndex { column, i -> %>\
+	 * @param ${column.fieldName}
+	 *            ${column.logicalName}
+<%	} %>\
+	 * @param dto
+	 *            削除条件
+	 * @return 削除件数
+	 */
+	public int delete(\
+<%	table.pkList.eachWithIndex { column, i -> %>\
+${i != 0 ? ', ':''}${column.columnClassName} ${column.fieldName}\
+<%	} %>\
+) {
+		int result = 0;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("delete from ${table.name}").appendLine();
+			sb.append("where").appendLine();
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%	} %>\
+
+<%	table.pkList.eachWithIndex { column, i -> %>\
+			sb.addParam(${column.fieldName});
+<%	} %>\
+
+			manager.query(sb);
+			result = manager.executeUpdate();
+
+			if (result <= 0) {
+				throw new OptimisticLockException(\
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i == 0) { %>\
+"${column.fieldName}="\
+<%	} else { %>\
+ + ", ${column.fieldName}="\
+<%		} %>\
+ + ${column.fieldName}\
+<%	} %>\
+);
+			}
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return result;
+	}
+
+	/**
+	 * 主キーで検索
+	 *
+<%	table.pkList.eachWithIndex { column, i -> %>\
+	 * @param ${column.fieldName}
+	 *            ${column.logicalName}
+<%	} %>\
+	 * @return 検索結果
+	 */
+	public ${table.dtoClassName} findByPrimaryKey(\
+<%	table.pkList.eachWithIndex { column, i -> %>\
+${i != 0 ? ', ':''}${column.columnClassName} ${column.fieldName}\
+<%	} %>\
+) {
+
+		${table.dtoClassName} dto = null;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("select").appendLine();
+<%	table.columnList.eachWithIndex { column, i -> %>\
+			sb.append("    ${i != 0 ? ',':' '}${column.columnName}").appendLine();
+<%	} %>\
+			sb.append("from").appendLine();
+			sb.append("    ").append(getTableName()).appendLine();
+			sb.append("where").appendLine();
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%	} %>\
+
+<%	table.pkList.eachWithIndex { column, i -> %>\
+			sb.addParam(${column.fieldName});
+<%	} %>\
+
+			manager.query(sb);
+			dto = (${table.dtoClassName})manager.getResultDto(${table.dtoClassName}.class);
+			if (dto == null) {
+				throw new NoDataFoundException("result is null."\
+<%	table.pkList.eachWithIndex { column, i -> %>\
+ + "${i != 0 ? ', ' : ''}${column.fieldName}=" + ${column.fieldName}\
+<%	} %>\
+);
+			}
+
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return dto;
+	}
+
+	/**
+	 * 主キーで検索
+	 *
+	 * @param dto
+	 *            検索条件
+	 * @return 検索結果
+	 */
+	public ${table.dtoClassName} findByPrimaryKey(${table.dtoClassName} key) {
+
+		${table.dtoClassName} dto = null;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("select").appendLine();
+<%	table.columnList.eachWithIndex { column, i -> %>\
+			sb.append("    ${i != 0 ? ',':' '}${column.columnName}").appendLine();
+<%	} %>\
+			sb.append("from").appendLine();
+			sb.append("    ").append(getTableName()).appendLine();
+			sb.append("where").appendLine();
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%	} %>\
+
+<%	table.pkList.eachWithIndex { column, i -> %>\
+			sb.addParam(key.${column.getterName}());
+<%	} %>\
+
+			manager.query(sb);
+			dto = (${table.dtoClassName})manager.getResultDto(${table.dtoClassName}.class);
+			if (dto == null) {
+				throw new NoDataFoundException("result is null." + key);
+			}
+
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return dto;
+	}
+<% } %>\
+
+	/**
+	 * データが存在するか確認します。
+	 *
+	 * @param dto
+	 *            検索条件
+	 * @return データが存在する場合、true
+	 */
+	public boolean exists(${table.dtoClassName} key) {
+
+		boolean exists = false;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("select 1 from ").append(getTableName()).appendLine();
+			sb.append("where").appendLine();
+<%	table.pkList.eachWithIndex { column, i -> %>\
+<%		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%	} %>\
+
+<%	table.pkList.eachWithIndex { column, i -> %>\
+			sb.addParam(key.${column.getterName}());
+<%	} %>\
+
+			manager.query(sb);
+			Integer result = (Integer)manager.getResultScaler(Integer.class);
+			if (result != null) {
+				exists = true;
+			}
+
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return exists;
+	}
+
+	/**
+	 * 全件検索
+	 *
+	 * @return 検索結果
+	 */
+	public List${table.generic} findAll() {
+		List${table.generic} list = null;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("select").appendLine();
+<%	table.columnList.eachWithIndex { column, i -> %>\
+			sb.append("    ${i != 0 ? ',':' '}${column.columnName}").appendLine();
+<%	} %>\
+			sb.append("from").appendLine();
+			sb.append("    ${table.name}").appendLine();
+<%	if (table.order) { %>\
+			sb.append("order by").appendLine();
+			sb.append("    ${table.order}").appendLine();
+<%	} %>\
+
+			manager.query(sb);
+			list = manager.getResultList(${table.dtoClassName}.class);
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return list;
+	}
+
+	/**
+	 * 全件削除
+	 *
+	 * @return 削除件数
+	 */
+	public int deleteAll() {
+		int count = 0;
+		try {
+			String sql = "delete from ${table.name}";
+
+			manager.query(sql);
+			count = manager.executeUpdate();
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return count;
+	}
+<%	table.additionList.each { method -> %>\
+<%		if(method.type == 'find') { %>\
+
+	/**
+	 * 引数の条件で検索
+	 *
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+	 * @param ${column.fieldName}
+	 *            ${column.logicalName}
+<%			} %>\
+	 * @return 検索結果
+	 */
+	public List${table.generic} $method.name(\
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+${i != 0 ? ', ':''}${column.columnClassName} ${column.fieldName}\
+<%			} %>\
+) {
+
+		List${table.generic} list = null;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("select").appendLine();
+<%			table.columnList.eachWithIndex { column, i -> %>\
+			sb.append("    ${i != 0 ? ',':' '}${column.columnName}").appendLine();
+<%			} %>\
+			sb.append("from").appendLine();
+			sb.append("    ${table.name}").appendLine();
+			sb.append("where").appendLine();
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+<%	  		if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%	  		} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%			} %>\
+<%	if (method.orderList) { %>\
+			sb.append("order by").appendLine();
+			sb.append("    ${method.order}").appendLine();
+<%	} %>\
+
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+			sb.addParam(${column.fieldName});
+<%			} %>\
+
+			manager.query(sb);
+			list = manager.getResultList(${table.dtoClassName}.class);
+
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return list;
+	}
+<%		} else if(method.type == 'delete') { %>\
+
+	/**
+	 * 引数の条件で削除
+	 *
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+	 * @param ${column.fieldName}
+	 *            ${column.logicalName}
+<%			} %>\
+	 * @return 削除件数
+	 */
+	public int $method.name(\
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+${i != 0 ? ', ':''}${column.columnClassName} ${column.fieldName}\
+<%			} %>\
+) {
+
+		int result = 0;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("delete from ").append(getTableName()).appendLine();
+			sb.append("where").appendLine();
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+<%	 			if(i != 0) { %>\
+			sb.append("    and").appendLine();
+<%	 			} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%			} %>\
+
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+			sb.addParam(${column.fieldName});
+<%			} %>\
+
+			manager.query(sb);
+			result = manager.executeUpdate();
+
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return result;
+	}
+<%		} else if(method.type == 'master') { %>\
+
+	/**
+	 * マスターデータ検索
+	 *
+	 * @return 検索結果
+	 */
+	public List${table.generic} findMasterList(\
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+${i != 0 ? ', ':''}${column.columnClassName} ${column.fieldName}\
+<%			} %>\
+) {
+		List${table.generic} list = null;
+		try {
+			SQLBuilder sb = new SQLBuilder();
+			sb.append("select").appendLine();
+<%			method.columnList.eachWithIndex { column, i -> %>\
+			sb.append("    ${i != 0 ? ',':' '}${column.columnName}").appendLine();
+<%			} %>\
+			sb.append("from").appendLine();
+			sb.append("    ").append(getTableName()).appendLine();
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+<%	  			if(i == 0) { %>\
+			sb.append("where").appendLine();
+<%	  			} else { %>\
+			sb.append("    and").appendLine();
+<%	  			} %>\
+			sb.append("    ${column.columnName} = ?").appendLine();
+<%			} %>\
+\
+<%			method.conditionList.eachWithIndex { column, i -> %>\
+			sb.addParam(${column.fieldName});
+<%			} %>\
+
+			manager.query(sb);
+			list = manager.getMasterList(\
+<%			method.columnList.eachWithIndex { column, i -> %>\
+${i != 0 ? ', ':''}"${column.fieldName}"\
+<%			} %>\
+);
+		} catch (Exception e) {
+			DaoExceptionHandler.raiseException(e);
+		}
+		return list;
+	}
+<%		} %>\
+<%	} %>\
+}
