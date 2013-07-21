@@ -6,6 +6,7 @@ package tools.excel
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.CreationHelper
+import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.poi.ss.usermodel.FormulaEvaluator
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
@@ -263,7 +264,11 @@ class Excel {
 		def value = null;
 		switch (cell.cellType) {
 			case Cell.CELL_TYPE_NUMERIC:
-				value = (int)cell.getNumericCellValue()
+				if (DateUtil.isCellDateFormatted(cell)) {
+					value = cell.getDateCellValue()
+				} else {
+					value = cell.getNumericCellValue()
+				}
 				break;
 			case Cell.CELL_TYPE_STRING:
 				value = cell.getStringCellValue()
@@ -286,6 +291,7 @@ class Excel {
 				break;
 
 			default:
+				// TODO “ÆŽ©‚ÌException‚ð“Š‚°‚é 
 				throw new RuntimeException("cellType=${cell.cellType}");
 				break;
 		}
